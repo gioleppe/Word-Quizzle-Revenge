@@ -31,6 +31,14 @@ public class User {
         return lastUDP;
     }
 
+    public ArrayList<String> getFriends(){
+        return friends;
+    }
+
+    public int getScore(){
+        return score;
+    }
+
     public boolean isLogged(){
         return logged;
     }
@@ -39,9 +47,15 @@ public class User {
         logged = val;
     }
 
+    public boolean isFriend(String friendNick){
+        if (friends.contains(friendNick))
+            return true;
+        else 
+            return false;
+    }
+
     public void setId(String id){
         sessionId = id;
-        System.out.println("User " + this.nickname + " got a new session id: " + this.sessionId);
     }
 
     public String getId(){
@@ -78,10 +92,7 @@ public class User {
      * @return a boolean representing the outcome of the operation 
      */
     public boolean addFriend(String friendNick){
-        if (friends.contains(friendNick))
-            return false;
-        else 
-            return true;
+         return friends.add(friendNick);
     }
 
 }

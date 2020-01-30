@@ -20,8 +20,9 @@ import java.rmi.registry.Registry;
 public class Client{
 
     Console cons;
-    String sessionID = null;
+    String sessionID = "notLogged";
     String nick = null;
+    boolean logged = false;
 
     public Client(){
         cons = System.console();
@@ -36,8 +37,6 @@ public class Client{
             e.printStackTrace();
         }
 
-        System.out.println("At least I got this far!");
-
         // creates a new OutputStreamWriter and decorates it with a BufferedWriter
         final OutputStreamWriter osw = new OutputStreamWriter(dataOut);
         final BufferedWriter writerOut = new BufferedWriter(osw);
@@ -50,8 +49,6 @@ public class Client{
         } catch (final IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("At least I got THIS far!");
 
     }
 
@@ -104,22 +101,64 @@ public class Client{
         if (raw[0].equals("ERROR!"))
             return;
         nick = nickname;
+        logged = true;
         sessionID = response.substring(response.indexOf(":") + 1);
 
     }
 
     public void logout() throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
         Socket sock = new Socket("127.0.0.1", 1518);
         String message = "logout " + nick + " " + sessionID;
         this.writeMsg(sock, message);
         String response = this.readMsg(sock);
         System.out.println(response);
+        sessionID = "notLogged";
         String[] raw = response.split(" ");
         if (raw[0].equals("ERROR!"))
             return;
+        logged = false;
 
     }
 
+    public void add_friend(String nick, String friendNick, String sessionID) throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "friend " + nick + " " + friendNick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        System.out.println(response);
+    }
+
+    public void friend_list() throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "friend_list " + this.nick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        System.out.println(response);
+    }
+
+    public void score() throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "score " + this.nick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        System.out.println(response);
+    }
 
 
     private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
@@ -135,13 +174,13 @@ public class Client{
             this.logout();
             break;
         case "add_friend":
-            //this.add_friend(params[1]);
+            this.add_friend(this.nick, params[1], this.sessionID);
             break;
         case "friend_list":
-            //this.friend_list();
+            this.friend_list();
             break;
         case "score":
-            //this.score();
+            this.score();
             break;
         case "scoreboard":
             //this.scoreboard();

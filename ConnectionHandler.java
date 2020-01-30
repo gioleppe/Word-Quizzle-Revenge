@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -102,14 +103,14 @@ public class ConnectionHandler implements Runnable{
         case "logout":
             this.logout(params[1], params[2]);
             break;
-        case "add_friend":
-            //this.add_friend(params[1]);
+        case "friend":
+            this.add_friend(params[1], params[2], params[3]);
             break;
         case "friend_list":
-            //this.friend_list();
+            this.friend_list(params[1], params[2]);
             break;
         case "score":
-            //this.score();
+            this.score(params[1], params[2]);
             break;
         case "scoreboard":
             //this.scoreboard();
@@ -149,6 +150,7 @@ public class ConnectionHandler implements Runnable{
                 user.setUDP(1111);
             }
             this.writeMsg(this.clientSock, "Successfully logged in. Session ID:" + uniqueID);
+            System.out.println(nick + " logged in.");
         }
 
     }
@@ -162,6 +164,66 @@ public class ConnectionHandler implements Runnable{
             user.setLogged(false);
             user.setId(null);
             writeMsg(this.clientSock, "Successfully logged out");
+            System.out.println(nick + " logged out.");
+        }
+    }
+
+    private void add_friend(String nickname, String friendNick, String sessionID){
+        User user = db.getUser(nickname);
+        if (!user.isLogged())
+            writeMsg(this.clientSock, "You're not logged in!");
+        else if (nickname.equals(friendNick))
+            writeMsg(this.clientSock, "You can't be friend with yourself!");
+        else if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else if (user.isFriend(friendNick))
+            writeMsg(this.clientSock, "Don't worry, you and " + friendNick + " are already friends.");
+        else if (db.getUser(friendNick).equals(null))
+            writeMsg(this.clientSock, "We don't have that user registered with us. Is that your imaginary friend?");
+        else {
+            synchronized(user){
+                user.addFriend(friendNick);
+            }
+            User friend = db.getUser(friendNick);
+            synchronized(friend){
+                friend.addFriend(nickname);
+            }
+            writeMsg(this.clientSock, friendNick + " succesfully added to your friend list.");
+            System.out.println(nickname + " and " + friendNick + " are now friends!");
+        } 
+    }
+
+    private void friend_list(String nick, String sessionID){
+        User user = db.getUser(nick);
+        if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else {
+            String message = new String();
+            synchronized (user){
+                ArrayList<String> friends = user.getFriends();
+                for (String s : friends)
+                    message += s + " ";
+            }
+            writeMsg(this.clientSock, message);
+            System.out.println(nick + " requested his friends list.");
+        }
+    }
+
+    private void score(String nick, String sessionID){
+        User user = db.getUser(nick);
+        if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else {
+            int score = 0;
+            synchronized(user){
+                score = user.getScore();
+            } 
+            String message = Integer.toString(score);
+            writeMsg(this.clientSock, message);
+            System.out.println(nick + " requested his score.");
         }
     }
 
