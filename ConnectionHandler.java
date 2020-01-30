@@ -113,13 +113,10 @@ public class ConnectionHandler implements Runnable{
             this.score(params[1], params[2]);
             break;
         case "scoreboard":
-            //this.scoreboard();
+            this.scoreboard(params[1], params[2]);
             break;
         case "match":
             //this.match(params[1]);
-            break;
-        case "show_matches":
-            //this.showMatches();
             break;
         case "accept_match":
             //this.acceptMatch(params[1]);
@@ -224,6 +221,33 @@ public class ConnectionHandler implements Runnable{
             String message = Integer.toString(score);
             writeMsg(this.clientSock, message);
             System.out.println(nick + " requested his score.");
+        }
+    }
+
+    private void scoreboard(String nick, String sessionID){
+        User user = db.getUser(nick);
+        if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else {
+            ArrayList<String> friends = user.getFriends();
+            if (friends.isEmpty()){
+                writeMsg(this.clientSock, "You don't have any friends, so we can't show you any score, sorry!");
+                return;
+            }
+            else {
+                ArrayList<User> scoreboardFriends = new ArrayList<User>();
+                for (String friend : friends)
+                    scoreboardFriends.add(db.getUser(friend));
+                scoreboardFriends.add(db.getUser(nick));
+                scoreboardFriends.sort(null);
+                String message = new String();
+                for (User u : scoreboardFriends) {
+                    message += u.getNickname() + " " + u.getScore() + " ";
+                }
+                writeMsg(this.clientSock, message);
+            }
+            
         }
     }
 

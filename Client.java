@@ -160,6 +160,18 @@ public class Client{
         System.out.println(response);
     }
 
+    public void scoreboard() throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "scoreboard " + this.nick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        System.out.println(response);
+    }
+
 
     private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
         final String[] params = input.split(" ");
@@ -183,7 +195,7 @@ public class Client{
             this.score();
             break;
         case "scoreboard":
-            //this.scoreboard();
+            this.scoreboard();
             break;
         case "match":
             //this.match(params[1]);

@@ -3,7 +3,7 @@ import java.util.ArrayList;
 /**
  * Class modeling the user. It has methods to get password hashes and nicknames.
  */
-public class User {
+public class User implements Comparable<User>{
 
     private String nickname;
     private int passwordHash = 0;
@@ -93,6 +93,11 @@ public class User {
      */
     public boolean addFriend(String friendNick){
          return friends.add(friendNick);
+    }
+
+    @Override
+    public int compareTo(final User user) {
+        return -1 * Integer.compare(this.score, user.getScore());
     }
 
 }
