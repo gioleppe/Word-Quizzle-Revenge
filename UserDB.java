@@ -1,7 +1,10 @@
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.*;
@@ -28,9 +31,19 @@ public class UserDB{
 
     /**
      * This methos is used to deserialize the database from the filesystem.
-     * If the database is empty it doesn't 
+     * If the database is empty it avoids breaking everything with a simple return. 
      */
     private void deserialize(){
+
+        File f = new File("database.json");
+        if(!f.exists()){
+            try {
+                f.createNewFile();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         String jsonDB = null;
         Gson gson = new Gson();
@@ -38,8 +51,8 @@ public class UserDB{
         final Type type = new TypeToken<ConcurrentHashMap<String, User>>() {
         }.getType();
         try {
-            jsonDB = new String(Files.readAllBytes(Paths.get("Database.json")), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
+            jsonDB = new String(Files.readAllBytes(Paths.get("database.json")), StandardCharsets.UTF_8);
+        } catch (IOException e) {
             e.printStackTrace();
         }
         //if the database is empty just return, since it doesn't make sense to deserialize it.
@@ -57,7 +70,7 @@ public class UserDB{
     /**
      * getter method used to retrieve a User from the db. 
      * @param nick the nickname of the user to be retrieved
-     * @return the instance of the User if it was present, else it return false.
+     * @return the instance of the User if it was present, else it returns null.
      */
     public User getUser(String nick){
         return db.get(nick);

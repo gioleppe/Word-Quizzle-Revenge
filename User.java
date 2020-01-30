@@ -9,6 +9,9 @@ public class User {
     private int passwordHash = 0;
     private ArrayList<String> friends = new ArrayList<String>();
     private int score = 0;
+    private transient String sessionId = null;
+    private transient boolean logged = false;
+    private transient int lastUDP = 0;
 
     /**
      * Class constructor.
@@ -18,6 +21,31 @@ public class User {
     public User(String nick, String pwd){
         nickname = nick;
         passwordHash = pwd.hashCode();
+    }
+
+    public void setUDP(int port){
+        lastUDP = port;
+    }
+
+    public int getUDP(){
+        return lastUDP;
+    }
+
+    public boolean isLogged(){
+        return logged;
+    }
+
+    public void setLogged(boolean val){
+        logged = val;
+    }
+
+    public void setId(String id){
+        sessionId = id;
+        System.out.println("User " + this.nickname + " got a new session id: " + this.sessionId);
+    }
+
+    public String getId(){
+        return sessionId;
     }
 
     /**

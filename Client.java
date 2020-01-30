@@ -20,6 +20,8 @@ import java.rmi.registry.Registry;
 public class Client{
 
     Console cons;
+    String sessionID = null;
+    String nick = null;
 
     public Client(){
         cons = System.console();
@@ -76,9 +78,6 @@ public class Client{
         return response;
     }
 
-    //private String readMsg(Socket sock){}
-
-
     public void registration(String nick, String pwd) throws RemoteException{
         RegistrationInterface remoteHandler = null;
         Remote remoteObj = null;
@@ -99,7 +98,26 @@ public class Client{
         Socket sock = new Socket("127.0.0.1", 1518);
         String message = "login " + nickname + " " + password;
         this.writeMsg(sock, message);
-        System.out.println(this.readMsg(sock));
+        String response = this.readMsg(sock);
+        System.out.println(response);
+        String[] raw = response.split(" ");
+        if (raw[0].equals("ERROR!"))
+            return;
+        nick = nickname;
+        sessionID = response.substring(response.indexOf(":") + 1);
+
+    }
+
+    public void logout() throws UnknownHostException, IOException{
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "logout " + nick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        System.out.println(response);
+        String[] raw = response.split(" ");
+        if (raw[0].equals("ERROR!"))
+            return;
+
     }
 
 
@@ -114,7 +132,7 @@ public class Client{
             this.login(params[1], params[2]);
             break;
         case "logout":
-            //this.logout();
+            this.logout();
             break;
         case "add_friend":
             //this.add_friend(params[1]);

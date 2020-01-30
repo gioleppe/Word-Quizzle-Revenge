@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.rmi.RemoteException;
+import java.util.UUID;
 
 /**
  * This class is used to implement the logic behind each task requested. 
@@ -56,8 +58,6 @@ public class ConnectionHandler implements Runnable{
         final InputStreamReader isr = new InputStreamReader(dataIn);
         final BufferedReader in = new BufferedReader(isr);
 
-        System.out.println("At least I got this far!");
-
         String response = null;
         try {
             // blocks waiting from an answer from the server
@@ -65,8 +65,6 @@ public class ConnectionHandler implements Runnable{
         } catch (final IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("I never got here");
 
         return response;
     }
@@ -87,19 +85,92 @@ public class ConnectionHandler implements Runnable{
         try {
             // sends the request on the socket
             writerOut.write(message);
+            writerOut.newLine();
+            writerOut.flush();
         } catch (final IOException e) {
             e.printStackTrace();
         }
         
     }
 
+    private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
+        final String[] params = input.split(" ");
+        switch (params[0]) {
+        case "login":
+            this.login(params[1], params[2]);
+            break;
+        case "logout":
+            this.logout(params[1], params[2]);
+            break;
+        case "add_friend":
+            //this.add_friend(params[1]);
+            break;
+        case "friend_list":
+            //this.friend_list();
+            break;
+        case "score":
+            //this.score();
+            break;
+        case "scoreboard":
+            //this.scoreboard();
+            break;
+        case "match":
+            //this.match(params[1]);
+            break;
+        case "show_matches":
+            //this.showMatches();
+            break;
+        case "accept_match":
+            //this.acceptMatch(params[1]);
+            break;
+        case "quit":
+            System.exit(0);
+        default:
+            System.out.println("Client sent an unrecognized message");
+            break;
+        }
+    }
+
+    private void login(String nick, String password){
+        User user = db.getUser(nick);
+        if (user.equals(null)){
+            this.writeMsg(this.clientSock, "ERROR! You have to register first!");
+            return;
+        }
+        else if (user.getHash() != password.hashCode()){
+            this.writeMsg(this.clientSock, "ERROR! You entered a wrong password!");
+            return;
+        }
+        else {
+            String uniqueID = UUID.randomUUID().toString();
+            synchronized(user){
+                user.setId(uniqueID);
+                user.setLogged(true);
+                user.setUDP(1111);
+            }
+            this.writeMsg(this.clientSock, "Successfully logged in. Session ID:" + uniqueID);
+        }
+
+    }
+
+    private void logout(String nick, String sessionID){
+        User user = db.getUser(nick);
+        if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else {
+            user.setLogged(false);
+            user.setId(null);
+            writeMsg(this.clientSock, "Successfully logged out");
+        }
+    }
+
     public void run(){
-        try {System.out.println("hey man u out of ur mind!");
-        System.out.println(this.readMsg(this.clientSock));
-        writer.write("diocane");
-        writer.newLine();
-        writer.flush();
-        clientSock.close();}
-        catch (Exception e){}
+        try {
+            parseInput(this.readMsg(this.clientSock));
+            clientSock.close();}
+        catch (Exception e){
+
+        }
     }
 }
