@@ -8,6 +8,7 @@ public class User {
     private String nickname;
     private int passwordHash = 0;
     private ArrayList<String> friends = new ArrayList<String>();
+    private int score = 0;
 
     /**
      * Class constructor.
@@ -33,6 +34,14 @@ public class User {
      */
     public int getHash(){
         return passwordHash;
+    }
+
+    /**
+     * This method is used to update the user's score.
+     * @param delta the score change. Could be either positive or negative.
+     */
+    public void modifyScore(int delta){
+        score += delta;
     }
 
     /**

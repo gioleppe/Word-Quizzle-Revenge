@@ -31,18 +31,20 @@ public class SerializerDaemon implements Runnable{
     }
 
     public void run(){
-        try {
-            //serializes on disk every 15 seconds.
-            Thread.sleep(15000);
+        while (true){
             try {
-                serialize();
+                //serializes on disk every 15 seconds.
+                Thread.sleep(15000);
+                try {
+                    serialize();
+                }
+                catch (IOException e){
+                    e.printStackTrace();
+                }
             }
-            catch (IOException e){
+            catch (InterruptedException e){
                 e.printStackTrace();
             }
-        }
-        catch (InterruptedException e){
-            e.printStackTrace();
         }
     }
     

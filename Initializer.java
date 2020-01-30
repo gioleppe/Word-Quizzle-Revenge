@@ -35,7 +35,8 @@ public class Initializer{
         //get the extractor instance.
         WordExtractor extractor = WordExtractor.getInstance();
         extractor.init(wordCount);
-        extractor.printDictionary();
+        
+        //extractor.printDictionary();
 
         /*HashMap<String, ArrayList<String>> challengeSet = extractor.getWords();
         for (String e : challengeSet.keySet()){
@@ -49,9 +50,10 @@ public class Initializer{
         UserDB db = new UserDB();
         RegistrationHandler regHandler = new RegistrationHandler(db);
         regHandler.init();
-        System.out.println(regHandler.register("cazzolo", "gioleppe"));
-        Thread.sleep(20000);
-        System.out.println("Finished all the testing fuckssss. Check for serialization");
-        UnicastRemoteObject.unexportObject(regHandler, true);
+        Thread serverThread = new Thread(new Server(extractor, db, challengeTimer, matchDuration));
+        serverThread.start();
+
+
+        //UnicastRemoteObject.unexportObject(regHandler, true);
     }
 }
