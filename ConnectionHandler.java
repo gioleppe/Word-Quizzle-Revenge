@@ -98,7 +98,7 @@ public class ConnectionHandler implements Runnable{
         final String[] params = input.split(" ");
         switch (params[0]) {
         case "login":
-            this.login(params[1], params[2]);
+            this.login(params[1], params[2], params[3]);
             break;
         case "logout":
             this.logout(params[1], params[2]);
@@ -116,7 +116,7 @@ public class ConnectionHandler implements Runnable{
             this.scoreboard(params[1], params[2]);
             break;
         case "match":
-            //this.match(params[1]);
+            this.match(params[1], params[2], params[3]);
             break;
         case "accept_match":
             //this.acceptMatch(params[1]);
@@ -129,7 +129,7 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
-    private void login(String nick, String password){
+    private void login(String nick, String password, String port){
         User user = db.getUser(nick);
         if (user.equals(null)){
             this.writeMsg(this.clientSock, "ERROR! You have to register first!");
@@ -144,10 +144,11 @@ public class ConnectionHandler implements Runnable{
             synchronized(user){
                 user.setId(uniqueID);
                 user.setLogged(true);
-                user.setUDP(1111);
+                user.setUDP(Integer.parseInt(port));
             }
             this.writeMsg(this.clientSock, "Successfully logged in. Session ID:" + uniqueID);
             System.out.println(nick + " logged in.");
+            System.out.println(nick + " is using UDP port: " + port);
         }
 
     }
@@ -176,7 +177,7 @@ public class ConnectionHandler implements Runnable{
         }
         else if (user.isFriend(friendNick))
             writeMsg(this.clientSock, "Don't worry, you and " + friendNick + " are already friends.");
-        else if (db.getUser(friendNick).equals(null))
+        else if (db.getUser(friendNick) == null)
             writeMsg(this.clientSock, "We don't have that user registered with us. Is that your imaginary friend?");
         else {
             synchronized(user){
@@ -249,6 +250,31 @@ public class ConnectionHandler implements Runnable{
             }
             
         }
+    }
+
+    private void match(String nickname, String friendNick, String sessionID){
+        User user = db.getUser(nickname);
+        if (!user.isLogged())
+            writeMsg(this.clientSock, "ERROR: You're not logged in!");
+        else if (nickname.equals(friendNick))
+            writeMsg(this.clientSock, "ERROR: You can't match yourself!");
+        else if (!user.getId().equals(sessionID)){
+            writeMsg(this.clientSock, "ERROR: You're using an invalid sessionID, please stop doing nasty things!");
+        }
+        else if (db.getUser(friendNick) == null)
+            writeMsg(this.clientSock, "ERROR: We don't have that user registered with us. Is that your imaginary friend?");
+        else if (!user.isFriend(friendNick))
+            writeMsg(this.clientSock, "ERROR: You and " + friendNick + " are not friends! Add him first!");
+        else if(!db.getUser(friendNick).isLogged())
+            writeMsg(this.clientSock, "ERROR: your friend is not logged in!");
+        else {
+            User friend = db.getUser(friendNick);
+            int port = friend.getUDP();
+            System.out.println(Integer.toString(port));
+            writeMsg(this.clientSock, "Sent match request to: " + friendNick);
+            System.out.println(nickname + " sent a match request to " + friendNick);
+
+        } 
     }
 
     public void run(){

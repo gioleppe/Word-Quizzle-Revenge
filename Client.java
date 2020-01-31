@@ -180,6 +180,40 @@ public class Client{
         System.out.println(response);
     }
 
+    public void match(String friendNick) throws UnknownHostException, IOException{
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        Socket sock = new Socket("127.0.0.1", 1518);
+        String message = "match " + this.nick + " " + friendNick + " " + sessionID;
+        this.writeMsg(sock, message);
+        String response = this.readMsg(sock);
+        if (response.substring(0, response.indexOf(":")).equals("ERROR")){
+            System.out.println(response.substring(response.indexOf(" ") + 1));
+        }
+        else {
+            System.out.println(response);
+        }
+
+    }
+
+    private void showMatches(){
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        else if (receivedChallenges.isEmpty()){
+            System.out.println("You haven't received any challenge yet!");
+        }
+        else{
+            System.out.println("You have received challenges from the following people:");
+            for (String e : receivedChallenges.keySet())
+                System.out.println(e + " ");
+        }
+
+    }
+
 
     private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
         final String[] params = input.split(" ");
@@ -188,7 +222,7 @@ public class Client{
             this.registration(params[1], params[2]);
             break;
         case "login":
-            this.login(params[1], params[2], Integer.toString(this.sockUDP.getPort()));
+            this.login(params[1], params[2], Integer.toString(this.sockUDP.getLocalPort()));
             break;
         case "logout":
             this.logout();
@@ -206,10 +240,10 @@ public class Client{
             this.scoreboard();
             break;
         case "match":
-            //this.match(params[1]);
+            this.match(params[1]);
             break;
         case "show_matches":
-            //this.showMatches();
+            this.showMatches();
             break;
         case "accept_match":
             //this.acceptMatch(params[1]);
@@ -242,7 +276,7 @@ public class Client{
 
         Client cli = new Client();
         try {
-            cli.sockUDP = new DatagramSocket();
+            cli.sockUDP = new DatagramSocket(0);
         }
         catch (SocketException e){
             e.printStackTrace();
@@ -306,13 +340,13 @@ class MatchListener implements Runnable {
             String contentString = new String(response.getData(), response.getOffset(), response.getLength(),
                     StandardCharsets.UTF_8);
             // if timed out message removes the challenger from the pending list
-            if (contentString.substring(0, contentString.indexOf("/")).equals("TIMEOUT")) {
-                String timedOutChallenger = contentString.substring(contentString.indexOf("/") + 1);
+            if (contentString.substring(0, contentString.indexOf(" ")).equals("TIMEOUT")) {
+                String timedOutChallenger = contentString.substring(contentString.indexOf(" ") + 1);
                 challengers.remove(timedOutChallenger);
                 System.out.println(timedOutChallenger + "'s match request timed out.");
                 continue;
             }
-            String challenger = contentString.substring(0, contentString.indexOf("/"));
+            String challenger = contentString.substring(0, contentString.indexOf(" "));
             System.out.println("Received a challenge from: " + challenger);
             System.out.print(">");
             // puts the challenger in the pending list
