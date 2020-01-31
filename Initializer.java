@@ -52,6 +52,7 @@ public class Initializer{
         regHandler.init();
         Thread serverThread = new Thread(new Server(extractor, db, challengeTimer, matchDuration));
         serverThread.start();
+        System.out.println("Welcome to WordQuizzleRevenge use our wondrous client to play the game!");
 
 
         //UnicastRemoteObject.unexportObject(regHandler, true);

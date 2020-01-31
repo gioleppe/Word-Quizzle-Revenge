@@ -9,20 +9,28 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Client{
 
-    Console cons;
-    String sessionID = "notLogged";
-    String nick = null;
-    boolean logged = false;
+    private Console cons;
+    private String sessionID = "notLogged";
+    private String nick = null;
+    private boolean logged = false;
+    private DatagramSocket sockUDP = null;
+    private ConcurrentHashMap<String, DatagramPacket> receivedChallenges = null;
 
     public Client(){
         cons = System.console();
@@ -91,9 +99,9 @@ public class Client{
         System.out.println(remoteHandler.register(nick, pwd));
     }
 
-    public void login(String nickname, String password) throws UnknownHostException, IOException{
+    public void login(String nickname, String password, String listenerPort) throws UnknownHostException, IOException{
         Socket sock = new Socket("127.0.0.1", 1518);
-        String message = "login " + nickname + " " + password;
+        String message = "login " + nickname + " " + password + " " + listenerPort;
         this.writeMsg(sock, message);
         String response = this.readMsg(sock);
         System.out.println(response);
@@ -180,7 +188,7 @@ public class Client{
             this.registration(params[1], params[2]);
             break;
         case "login":
-            this.login(params[1], params[2]);
+            this.login(params[1], params[2], Integer.toString(this.sockUDP.getPort()));
             break;
         case "logout":
             this.logout();
@@ -233,6 +241,18 @@ public class Client{
         }
 
         Client cli = new Client();
+        try {
+            cli.sockUDP = new DatagramSocket();
+        }
+        catch (SocketException e){
+            e.printStackTrace();
+        }
+
+        cli.receivedChallenges = new ConcurrentHashMap<String, DatagramPacket>();
+
+        MatchListener UDPListener = new MatchListener(cli.sockUDP, cli.receivedChallenges);
+        Thread listener = new Thread(UDPListener);
+        listener.start();
 
         String input;
 
@@ -246,18 +266,58 @@ public class Client{
             }
         }
 
-        /*try {Socket sock = new Socket(args[0], 1518);
-        BufferedInputStream in = new BufferedInputStream(sock.getInputStream());
-        BufferedOutputStream out = new BufferedOutputStream(sock.getOutputStream());
-        byte[] buff = new byte[128];
-        out.write("diocane".getBytes());
-        out.flush();
-        System.out.println("written everything");
-        in.read(buff);
-        String received = new String(buff);
-        System.out.println(received);}
-        catch (Exception e){
-            e.printStackTrace();
-        }*/
+    }
+}
+
+    /**
+ * This class implements the UDP socket listener waiting to receive match
+ * invitations.
+ * 
+ */
+class MatchListener implements Runnable {
+
+    DatagramSocket UDPSocket;
+    ConcurrentHashMap<String, DatagramPacket> challengers;
+
+    /**
+     * The constructor to MatchListener.
+     * 
+     * @param UDPSock     the UDP socket where the listener will wait for
+     *                    invitations
+     * @param challengers the HashMap all pending invitations are put
+     */
+    MatchListener(DatagramSocket UDPSock, ConcurrentHashMap<String, DatagramPacket> challengers) {
+        this.UDPSocket = UDPSock;
+        this.challengers = challengers;
+    }
+
+    public void run() {
+        System.out.println("Started Listener thread");
+        while (true) {
+            byte[] buf = new byte[512];
+            DatagramPacket response = new DatagramPacket(buf, buf.length);
+            try {
+                // receives datagrams
+                UDPSocket.receive(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // gets the content from the packet
+            String contentString = new String(response.getData(), response.getOffset(), response.getLength(),
+                    StandardCharsets.UTF_8);
+            // if timed out message removes the challenger from the pending list
+            if (contentString.substring(0, contentString.indexOf("/")).equals("TIMEOUT")) {
+                String timedOutChallenger = contentString.substring(contentString.indexOf("/") + 1);
+                challengers.remove(timedOutChallenger);
+                System.out.println(timedOutChallenger + "'s match request timed out.");
+                continue;
+            }
+            String challenger = contentString.substring(0, contentString.indexOf("/"));
+            System.out.println("Received a challenge from: " + challenger);
+            System.out.print(">");
+            // puts the challenger in the pending list
+            challengers.put(challenger, response);
+
+        }
     }
 }
