@@ -6,10 +6,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class is used to implement the logic behind each task requested. 
@@ -252,7 +259,7 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
-    private void match(String nickname, String friendNick, String sessionID){
+    private void match(String nickname, String friendNick, String sessionID) throws SocketException, IOException{
         User user = db.getUser(nickname);
         if (!user.isLogged())
             writeMsg(this.clientSock, "ERROR: You're not logged in!");
@@ -271,8 +278,36 @@ public class ConnectionHandler implements Runnable{
             User friend = db.getUser(friendNick);
             int port = friend.getUDP();
             System.out.println(Integer.toString(port));
-            writeMsg(this.clientSock, "Sent match request to: " + friendNick);
-            System.out.println(nickname + " sent a match request to " + friendNick);
+            DatagramSocket sock = new DatagramSocket(0);
+            String message  = nickname + " challenged you";
+            DatagramPacket req = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getLocalHost(), port);
+            message = "TIMEOUT " + nickname;
+            DatagramPacket timeout = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getLocalHost(), port);
+            byte[] buf = new byte[512];
+            DatagramPacket resp = new DatagramPacket(buf, buf.length);
+
+            try {
+                sock.setSoTimeout(15000);
+                sock.send(req);
+                writeMsg(this.clientSock, "Sent match request to: " + friendNick);
+                System.out.println(nickname + " sent a match request to " + friendNick);
+                sock.receive(resp);
+                writeMsg(this.clientSock,  friendNick + " accepted your match request");
+                String contentString = new String(resp.getData(), resp.getOffset(), resp.getLength(),
+                StandardCharsets.UTF_8);
+                System.out.println(contentString);
+            }
+
+            catch (SocketTimeoutException e) {
+                sock.send(timeout);
+                writeMsg(this.clientSock, "Invitation to: " + friendNick + " timed out.");
+                System.out.println(nickname + "'s match request to " + friendNick + " timed out");
+            }
+
+            finally {
+                sock.close();
+                this.writeMsg(this.clientSock, "ERROR: There's been some problem with the request");
+            }
 
         } 
     }

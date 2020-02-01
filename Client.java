@@ -191,10 +191,13 @@ public class Client{
         String response = this.readMsg(sock);
         if (response.substring(0, response.indexOf(":")).equals("ERROR")){
             System.out.println(response.substring(response.indexOf(" ") + 1));
+            return;
         }
         else {
             System.out.println(response);
         }
+        response = this.readMsg(sock);
+        System.out.println(response);
 
     }
 
@@ -212,6 +215,24 @@ public class Client{
                 System.out.println(e + " ");
         }
 
+    }
+
+    private void acceptMatch(String friendNick) throws IOException {
+        if (!logged){
+            System.out.println("You're not logged in!");
+            return;
+        }
+        else if (!receivedChallenges.containsKey(friendNick)){
+            System.out.println("Your friend didn't challenge you yet!");
+            return;
+        }
+        DatagramPacket request = this.receivedChallenges.get(friendNick);
+        String msg = "accepted";
+        byte[] resp = msg.getBytes();
+        DatagramPacket acceptance = new DatagramPacket(resp, resp.length, request.getAddress(), request.getPort());
+        DatagramSocket sock = new DatagramSocket(0);
+        sock.send(acceptance);
+        sock.close();
     }
 
 
@@ -246,7 +267,7 @@ public class Client{
             this.showMatches();
             break;
         case "accept_match":
-            //this.acceptMatch(params[1]);
+            this.acceptMatch(params[1]);
             break;
         case "quit":
             System.exit(0);
