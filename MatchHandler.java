@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+/**
+ * The match handler class implements the server-side logic behind each match. 
+ */
 public class MatchHandler implements Runnable{
 
     Socket clientSock = null;
@@ -65,7 +68,14 @@ public class MatchHandler implements Runnable{
         
     }
 
-
+    /**
+    * The Matchhandler constructor is used to set up everything in order to serve the match request.
+    * @param sock the client sock used for communicating results.
+    * @param words
+    * @param nick
+    * @param helper
+    * @param duration
+     */
     public MatchHandler(Socket sock, HashMap<String, ArrayList<String>> words, User nick, MatchHelper helper, int duration){
         clientSock = sock;
         dict = words;
@@ -95,6 +105,7 @@ public class MatchHandler implements Runnable{
 
 
         //helper.setAnswer(challenger, answers);
+
         writeMsg(clientSock, "Match over: you scored ");
         return;
 

@@ -36,6 +36,14 @@ public class ConnectionHandler implements Runnable{
     int challengeTimer = 0;
     int matchDuration = 0;
 
+    /**
+     * Constructor to the ConnectionHandler class.
+     * @param socket the freshly opened socket.
+     * @param database the database used to access users.
+     * @param extractor the word extractor singleton used to extract words and translations.
+     * @param challenge the duration of each challenge invitation.
+     * @param match the duration of each match.
+     */
     ConnectionHandler(Socket socket, UserDB database, WordExtractor extractor, int challenge, int match){
         clientSock = socket;
         db = database;
@@ -108,6 +116,13 @@ public class ConnectionHandler implements Runnable{
         
     }
 
+    /**
+     * Method used to parse messages and call appropriate methods.
+     * @param input the string to be parsed
+     * @throws IOException 
+     * @throws RemoteException
+     * @throws InterruptedException
+     */
     private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
         final String[] params = input.split(" ");
         switch (params[0]) {
@@ -132,17 +147,18 @@ public class ConnectionHandler implements Runnable{
         case "match":
             this.match(params[1], params[2], params[3]);
             break;
-        case "accept_match":
-            //this.acceptMatch(params[1]);
-            break;
-        case "quit":
-            System.exit(0);
         default:
             System.out.println("Client sent an unrecognized message");
             break;
         }
     }
 
+    /**
+     * Method used to log a user to the server.
+     * @param nick the nick of the user to be logged.
+     * @param password the user's password.
+     * @param port the UDP port on which the user opened a DatagramSocket.
+     */
     private void login(String nick, String password, String port){
         User user = db.getUser(nick);
         if (user.equals(null)){
@@ -167,6 +183,11 @@ public class ConnectionHandler implements Runnable{
 
     }
 
+    /**
+     * The logout method is used by an user to logout from the server.
+     * @param nick the user to be logged out.
+     * @param sessionID user's sessionID.
+     */
     private void logout(String nick, String sessionID){
         User user = db.getUser(nick);
         if (!user.getId().equals(sessionID)){
@@ -180,6 +201,12 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
+    /**
+     * This method is used by an user to add a friend.
+     * @param nickname the user's nickname.
+     * @param friendNick friend's nickname.
+     * @param sessionID sessionID used to identify this user.
+     */
     private void add_friend(String nickname, String friendNick, String sessionID){
         User user = db.getUser(nickname);
         if (!user.isLogged())
@@ -206,6 +233,11 @@ public class ConnectionHandler implements Runnable{
         } 
     }
 
+    /**
+     * Method used by the user to get his friend list.
+     * @param nick user's nickname.
+     * @param sessionID user's sessionID used to identify his connection.
+     */
     private void friend_list(String nick, String sessionID){
         User user = db.getUser(nick);
         if (!user.getId().equals(sessionID)){
@@ -223,6 +255,11 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
+    /**
+     * This method is used by an user to get his score.
+     * @param nick user's nickname.
+     * @param sessionID user's sessionID used to identify his connection.
+     */
     private void score(String nick, String sessionID){
         User user = db.getUser(nick);
         if (!user.getId().equals(sessionID)){
@@ -239,6 +276,11 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
+    /**
+     * Method used by an user to get his and his friends' scoreboard.
+     * @param nick user's nickname.
+     * @param sessionID user's sessionID used to identify his connection.
+     */
     private void scoreboard(String nick, String sessionID){
         User user = db.getUser(nick);
         if (!user.getId().equals(sessionID)){
@@ -266,6 +308,15 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
+    /**
+     * this method is used by an user to match a friend of his.
+     * @param nickname user's nickname.
+     * @param friendNick friend's nickname.
+     * @param sessionID sessionID used to idetify the user.
+     * @throws SocketException
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private void match(String nickname, String friendNick, String sessionID) throws SocketException, IOException, InterruptedException{
         User user = db.getUser(nickname);
         if (!user.isLogged())

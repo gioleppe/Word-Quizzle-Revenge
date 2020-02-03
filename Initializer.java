@@ -35,16 +35,6 @@ public class Initializer{
         //get the extractor instance.
         WordExtractor extractor = WordExtractor.getInstance();
         extractor.init(wordCount);
-        
-        //extractor.printDictionary();
-
-        /*HashMap<String, ArrayList<String>> challengeSet = extractor.getWords();
-        for (String e : challengeSet.keySet()){
-            System.out.println("Selected Word: " + e + " with " + challengeSet.get(e).size() + " different translations that are: ");
-            for (String s : challengeSet.get(e))
-                System.out.print(s + " ");
-            System.out.println();
-        }*/
 
         //creates a new db and the RegistrationHandler RMI handler
         UserDB db = new UserDB();
@@ -52,7 +42,7 @@ public class Initializer{
         regHandler.init();
         Thread serverThread = new Thread(new Server(extractor, db, challengeTimer, matchDuration));
         serverThread.start();
-        System.out.println("Welcome to WordQuizzleRevenge use our wondrous client to play the game!");
+        System.out.println("Welcome to WordQuizzleRevenge. Use our wondrous client to play the game!");
 
 
         //UnicastRemoteObject.unexportObject(regHandler, true);

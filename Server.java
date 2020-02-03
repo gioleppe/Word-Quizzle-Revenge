@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.net.Socket;
 
 /**
- * Server class used to implement the main loop in the application. implements a multithreaded server 
+ * Server class used to implement the main loop in the application. implements a multithreaded server.
  */
 public class Server implements Runnable{
     WordExtractor extractor = null;
@@ -42,6 +42,7 @@ public class Server implements Runnable{
 
         while(true){
             try {
+                // for each new connection spawn a connection handler.
                 Socket clientSock = sSock.accept();
                 ConnectionHandler handler = new ConnectionHandler(clientSock, database, extractor, challengeTimer, matchDuration);
                 tpool.execute(handler);

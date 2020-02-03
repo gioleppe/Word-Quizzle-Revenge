@@ -32,6 +32,9 @@ public class Client{
     private DatagramSocket sockUDP = null;
     private ConcurrentHashMap<String, DatagramPacket> receivedChallenges = null;
 
+    /**
+     * Constructor to the User class.
+     */
     public Client(){
         cons = System.console();
     }
@@ -83,6 +86,12 @@ public class Client{
         return response;
     }
 
+    /**
+     * This method calls the remote method to register an user.
+     * @param nick new user's nickname.
+     * @param pwd user's password.
+     * @throws RemoteException
+     */
     public void registration(String nick, String pwd) throws RemoteException{
         RegistrationInterface remoteHandler = null;
         Remote remoteObj = null;
@@ -99,6 +108,14 @@ public class Client{
         System.out.println(remoteHandler.register(nick, pwd));
     }
 
+    /**
+     * Method used by an user to login.
+     * @param nickname user's nickname.
+     * @param password user's password.
+     * @param listenerPort user's UDP port.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void login(String nickname, String password, String listenerPort) throws UnknownHostException, IOException{
         Socket sock = new Socket("127.0.0.1", 1518);
         String message = "login " + nickname + " " + password + " " + listenerPort;
@@ -114,6 +131,11 @@ public class Client{
 
     }
 
+    /**
+     * Method used by an user to logout from the server.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void logout() throws UnknownHostException, IOException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -132,6 +154,14 @@ public class Client{
 
     }
 
+    /**
+     * Used by an user to add someone as his friend.
+     * @param nick user's nickname.
+     * @param friendNick friend's nickname.
+     * @param sessionID sessionID used to identify user's connection.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void add_friend(String nick, String friendNick, String sessionID) throws UnknownHostException, IOException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -144,6 +174,11 @@ public class Client{
         System.out.println(response);
     }
 
+    /**
+     * Used by an user to request his friend list.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void friend_list() throws UnknownHostException, IOException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -156,6 +191,11 @@ public class Client{
         System.out.println(response);
     }
 
+    /**
+     * Used by an user to get his score.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void score() throws UnknownHostException, IOException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -168,6 +208,11 @@ public class Client{
         System.out.println(response);
     }
 
+    /**
+     * Used by an user to show his scoreboard.
+     * @throws UnknownHostException
+     * @throws IOException
+     */
     public void scoreboard() throws UnknownHostException, IOException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -180,6 +225,13 @@ public class Client{
         System.out.println(response);
     }
 
+    /**
+     * Method used by an user to match a friend of his.
+     * @param friendNick friend's nickname.
+     * @throws UnknownHostException
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void match(String friendNick) throws UnknownHostException, IOException, InterruptedException{
         if (!logged){
             System.out.println("You're not logged in!");
@@ -211,6 +263,9 @@ public class Client{
         }
     }
 
+    /**
+     * Method used to show all pending matches.
+     */
     private void showMatches(){
         if (!logged){
             System.out.println("You're not logged in!");
@@ -227,6 +282,12 @@ public class Client{
 
     }
 
+    /**
+     * Used by a friend to accept one of his pending challenges.
+     * @param friendNick friend's nickname.
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private void acceptMatch(String friendNick) throws IOException, InterruptedException {
         if (!logged){
             System.out.println("You're not logged in!");
@@ -255,6 +316,11 @@ public class Client{
 
     }
 
+    /**
+     * This method implements user's match logi.
+     * @param sock the freshly opened socket used to exchange messages with the server.
+     * @throws InterruptedException
+     */
     private void matchLogic(Socket sock) throws InterruptedException{
         System.out.println("Match starting in a while, be ready!");
         Thread.sleep(500);
@@ -270,6 +336,13 @@ public class Client{
     }
 
 
+    /**
+     * This method is used to parse user's input.
+     * @param input user's input string.
+     * @throws IOException
+     * @throws RemoteException
+     * @throws InterruptedException
+     */
     private void parseInput(final String input) throws IOException, RemoteException, InterruptedException {
         final String[] params = input.split(" ");
         switch (params[0]) {
