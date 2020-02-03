@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.sql.Time;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -16,6 +15,7 @@ public class MatchHandler implements Runnable{
     HashMap<String, ArrayList<String>> dict = null;
     User challenger = null;
     MatchHelper helper;
+    int matchDuration = 0;
 
     private String readMsg(Socket sock){
         // gets input stream from the socket passed as argument
@@ -66,10 +66,11 @@ public class MatchHandler implements Runnable{
     }
 
 
-    public MatchHandler(Socket sock, HashMap<String, ArrayList<String>> words, User nick, MatchHelper helper){
+    public MatchHandler(Socket sock, HashMap<String, ArrayList<String>> words, User nick, MatchHelper helper, int duration){
         clientSock = sock;
         dict = words;
         challenger = nick;
+        matchDuration = duration;
 
     }
 
@@ -82,7 +83,7 @@ public class MatchHandler implements Runnable{
 
         for (String word : dict.keySet()){
             long elapsed = System.currentTimeMillis()-startTime;
-            if (elapsed>15000){
+            if (elapsed>(matchDuration*1000)){
                 writeMsg(clientSock, "Match over: your time has run out!");
                 break;
             }

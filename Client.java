@@ -197,12 +197,18 @@ public class Client{
             System.out.println(response);
         }
         response = this.readMsg(sock);
-        System.out.println(response.substring(0, response.indexOf(",")));
-        
+        System.out.println(response);
+
+        //System.out.println(response.substring(0, response.indexOf(",")));
+        if (response.substring(0, response.indexOf(" ")).equals("Invitation")){
+            return;
+        }
+        else {
         //open match
         Socket newSock = new Socket("127.0.0.1", Integer.parseInt(response.substring(response.indexOf(":") + 1)));
         matchLogic(newSock);
         newSock.close();
+        }
     }
 
     private void showMatches(){

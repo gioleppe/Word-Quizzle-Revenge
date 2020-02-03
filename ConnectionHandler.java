@@ -33,11 +33,15 @@ public class ConnectionHandler implements Runnable{
     OutputStream out = null;
     BufferedReader reader = null;
     BufferedWriter writer = null;
+    int challengeTimer = 0;
+    int matchDuration = 0;
 
-    ConnectionHandler(Socket socket, UserDB database, WordExtractor extractor){
+    ConnectionHandler(Socket socket, UserDB database, WordExtractor extractor, int challenge, int match){
         clientSock = socket;
         db = database;
         extr = extractor;
+        challengeTimer = challenge;
+        matchDuration = match;
 
         try {
             in = clientSock.getInputStream();
@@ -294,7 +298,7 @@ public class ConnectionHandler implements Runnable{
 
 
             try {
-                sock.setSoTimeout(15000);
+                sock.setSoTimeout(challengeTimer * 1000);
                 sock.send(req);
                 writeMsg(this.clientSock, "Sent match request to: " + friendNick);
                 System.out.println(nickname + " sent a match request to " + friendNick);
@@ -310,9 +314,9 @@ public class ConnectionHandler implements Runnable{
                 MatchHelper helper = new MatchHelper();
 
                 Socket challenger = challengeSock.accept(); 
-                challengeThreads[0] = new Thread(new MatchHandler(challenger, words, db.getUser(nickname), helper));
+                challengeThreads[0] = new Thread(new MatchHandler(challenger, words, db.getUser(nickname), helper, matchDuration));
                 Socket challenged = challengeSock.accept(); 
-                challengeThreads[1] = new Thread(new MatchHandler(challenged, words, db.getUser(friendNick), helper));
+                challengeThreads[1] = new Thread(new MatchHandler(challenged, words, db.getUser(friendNick), helper, matchDuration));
 
                 System.out.println("Accepted match connections from users " + nickname + friendNick);
 
@@ -325,7 +329,7 @@ public class ConnectionHandler implements Runnable{
 
             catch (SocketTimeoutException e) {
                 sock.send(timeout);
-                writeMsg(this.clientSock, "Invitation to: " + friendNick + " timed out.");
+                writeMsg(this.clientSock, "Invitation to " + friendNick + " timed out.");
                 System.out.println(nickname + "'s match request to " + friendNick + " timed out");
             }
 

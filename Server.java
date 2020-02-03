@@ -43,7 +43,7 @@ public class Server implements Runnable{
         while(true){
             try {
                 Socket clientSock = sSock.accept();
-                ConnectionHandler handler = new ConnectionHandler(clientSock, database, extractor);
+                ConnectionHandler handler = new ConnectionHandler(clientSock, database, extractor, challengeTimer, matchDuration);
                 tpool.execute(handler);
             }
             catch (Exception e){
