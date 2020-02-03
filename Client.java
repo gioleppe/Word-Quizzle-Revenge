@@ -180,7 +180,7 @@ public class Client{
         System.out.println(response);
     }
 
-    public void match(String friendNick) throws UnknownHostException, IOException{
+    public void match(String friendNick) throws UnknownHostException, IOException, InterruptedException{
         if (!logged){
             System.out.println("You're not logged in!");
             return;
@@ -197,8 +197,12 @@ public class Client{
             System.out.println(response);
         }
         response = this.readMsg(sock);
-        System.out.println(response);
-
+        System.out.println(response.substring(0, response.indexOf(",")));
+        
+        //open match
+        Socket newSock = new Socket("127.0.0.1", Integer.parseInt(response.substring(response.indexOf(":") + 1)));
+        matchLogic(newSock);
+        newSock.close();
     }
 
     private void showMatches(){
@@ -217,7 +221,7 @@ public class Client{
 
     }
 
-    private void acceptMatch(String friendNick) throws IOException {
+    private void acceptMatch(String friendNick) throws IOException, InterruptedException {
         if (!logged){
             System.out.println("You're not logged in!");
             return;
@@ -233,6 +237,30 @@ public class Client{
         DatagramSocket sock = new DatagramSocket(0);
         sock.send(acceptance);
         sock.close();
+
+        //open match sock
+        String contentString = new String(request.getData(), request.getOffset(), request.getLength(),
+                    StandardCharsets.UTF_8);
+        int port = Integer.parseInt(contentString.substring(contentString.indexOf(":") + 1));
+
+        Socket newSock = new Socket("127.0.0.1", port);
+        matchLogic(newSock);
+        newSock.close();
+
+    }
+
+    private void matchLogic(Socket sock) throws InterruptedException{
+        System.out.println("Match starting in a while, be ready!");
+        Thread.sleep(500);
+        String resp = null;
+        String req = null;
+        while (!(resp = readMsg(sock)).substring(0, resp.indexOf(":")).equals("Match over")){
+            System.out.println(resp);
+            req = cons.readLine("%s ", ">"); 
+            writeMsg(sock, req);
+        }
+        System.out.println(resp);
+        return;
     }
 
 

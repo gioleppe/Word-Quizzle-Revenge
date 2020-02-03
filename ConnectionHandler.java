@@ -9,13 +9,16 @@ import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -259,7 +262,7 @@ public class ConnectionHandler implements Runnable{
         }
     }
 
-    private void match(String nickname, String friendNick, String sessionID) throws SocketException, IOException{
+    private void match(String nickname, String friendNick, String sessionID) throws SocketException, IOException, InterruptedException{
         User user = db.getUser(nickname);
         if (!user.isLogged())
             writeMsg(this.clientSock, "ERROR: You're not logged in!");
@@ -279,12 +282,16 @@ public class ConnectionHandler implements Runnable{
             int port = friend.getUDP();
             System.out.println(Integer.toString(port));
             DatagramSocket sock = new DatagramSocket(0);
-            String message  = nickname + " challenged you";
+
+            ServerSocket challengeSock = new ServerSocket(0);
+
+            String message  = nickname + " challenged you, sock at:" + challengeSock.getLocalPort();
             DatagramPacket req = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getLocalHost(), port);
             message = "TIMEOUT " + nickname;
             DatagramPacket timeout = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getLocalHost(), port);
             byte[] buf = new byte[512];
             DatagramPacket resp = new DatagramPacket(buf, buf.length);
+
 
             try {
                 sock.setSoTimeout(15000);
@@ -292,10 +299,28 @@ public class ConnectionHandler implements Runnable{
                 writeMsg(this.clientSock, "Sent match request to: " + friendNick);
                 System.out.println(nickname + " sent a match request to " + friendNick);
                 sock.receive(resp);
-                writeMsg(this.clientSock,  friendNick + " accepted your match request");
+                writeMsg(this.clientSock,  friendNick + " accepted your match request, sock at:" + challengeSock.getLocalPort());
                 String contentString = new String(resp.getData(), resp.getOffset(), resp.getLength(),
                 StandardCharsets.UTF_8);
                 System.out.println(contentString);
+
+                Thread[] challengeThreads = new Thread[2];
+                HashMap<String, ArrayList<String>> words = extr.getWords();
+           
+                MatchHelper helper = new MatchHelper();
+
+                Socket challenger = challengeSock.accept(); 
+                challengeThreads[0] = new Thread(new MatchHandler(challenger, words, db.getUser(nickname), helper));
+                Socket challenged = challengeSock.accept(); 
+                challengeThreads[1] = new Thread(new MatchHandler(challenged, words, db.getUser(friendNick), helper));
+
+                System.out.println("Accepted match connections from users " + nickname + friendNick);
+
+                for (Thread t : challengeThreads)
+                    t.start();
+                for (Thread t : challengeThreads)
+                    t.join();
+
             }
 
             catch (SocketTimeoutException e) {
@@ -306,7 +331,7 @@ public class ConnectionHandler implements Runnable{
 
             finally {
                 sock.close();
-                this.writeMsg(this.clientSock, "ERROR: There's been some problem with the request");
+                //this.writeMsg(this.clientSock, "ERROR: There's been some problem with the request");
             }
 
         } 
