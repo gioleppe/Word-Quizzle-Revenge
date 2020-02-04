@@ -17,8 +17,8 @@ public class MatchHandler implements Runnable{
     Socket clientSock = null;
     HashMap<String, ArrayList<String>> dict = null;
     User challenger = null;
-    MatchHelper helper;
     int matchDuration = 0;
+    ArrayList<String> answers = null;
 
     private String readMsg(Socket sock){
         // gets input stream from the socket passed as argument
@@ -73,14 +73,15 @@ public class MatchHandler implements Runnable{
     * @param sock the client sock used for communicating results.
     * @param words
     * @param nick
-    * @param helper
     * @param duration
      */
-    public MatchHandler(Socket sock, HashMap<String, ArrayList<String>> words, User nick, MatchHelper helper, int duration){
+    public MatchHandler(Socket sock, HashMap<String, ArrayList<String>> words, User nick, ArrayList<String> ans,  int duration){
         clientSock = sock;
         dict = words;
         challenger = nick;
         matchDuration = duration;
+        answers = ans;
+        
 
     }
 
@@ -89,24 +90,22 @@ public class MatchHandler implements Runnable{
         String resp = "";
         long startTime = System.currentTimeMillis();
 
-        ArrayList<String> answers = new ArrayList<String>();
-
         for (String word : dict.keySet()){
             long elapsed = System.currentTimeMillis()-startTime;
             if (elapsed>(matchDuration*1000)){
-                writeMsg(clientSock, "Match over: your time has run out!");
+                writeMsg(clientSock, "Match over: your time has run out! now wait for results.");
                 break;
             }
             writeMsg(clientSock, "Translate the word: " + word);
             resp = readMsg(clientSock);
-            System.out.println(resp);
+            //System.out.println(resp);
             answers.add(resp);
         }
 
 
         //helper.setAnswer(challenger, answers);
 
-        writeMsg(clientSock, "Match over: you scored ");
+        writeMsg(clientSock, "Match over: wait for results!");
         return;
 
     }

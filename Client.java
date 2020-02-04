@@ -317,7 +317,7 @@ public class Client{
     }
 
     /**
-     * This method implements user's match logi.
+     * This method implements user's match logic.
      * @param sock the freshly opened socket used to exchange messages with the server.
      * @throws InterruptedException
      */
@@ -332,6 +332,7 @@ public class Client{
             writeMsg(sock, req);
         }
         System.out.println(resp);
+        System.out.println(readMsg(sock));
         return;
     }
 

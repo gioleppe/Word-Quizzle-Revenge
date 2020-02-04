@@ -361,20 +361,77 @@ public class ConnectionHandler implements Runnable{
 
                 Thread[] challengeThreads = new Thread[2];
                 HashMap<String, ArrayList<String>> words = extr.getWords();
-           
-                MatchHelper helper = new MatchHelper();
+                ArrayList<String> challengerAnswers = new ArrayList<String>();
+                ArrayList<String> challengedAnswers = new ArrayList<String>();
 
                 Socket challenger = challengeSock.accept(); 
-                challengeThreads[0] = new Thread(new MatchHandler(challenger, words, db.getUser(nickname), helper, matchDuration));
+                challengeThreads[0] = new Thread(new MatchHandler(challenger, words, db.getUser(nickname),
+                challengerAnswers, matchDuration));
                 Socket challenged = challengeSock.accept(); 
-                challengeThreads[1] = new Thread(new MatchHandler(challenged, words, db.getUser(friendNick), helper, matchDuration));
+                challengeThreads[1] = new Thread(new MatchHandler(challenged, words, db.getUser(friendNick),
+                challengedAnswers, matchDuration));
 
-                System.out.println("Accepted match connections from users " + nickname + friendNick);
+                System.out.println("Accepted match connections from users " + nickname + " " + friendNick);
 
                 for (Thread t : challengeThreads)
                     t.start();
                 for (Thread t : challengeThreads)
                     t.join();
+
+                int challengerRes = 0, challengedRes = 0;
+
+
+                for (String s : words.keySet()){
+                    for (String w :words.get(s)){
+                        if (challengedAnswers.contains(w)){
+                            challengedRes++;
+                            continue;
+                        }
+                    }
+                }
+
+                for (String s : words.keySet()){
+                    for (String w : words.get(s)){
+                        if (challengerAnswers.contains(w)){
+                            challengerRes++;
+                            continue;
+                        }
+                    }
+                }
+
+
+                if (challengedRes == challengerRes){
+                    writeMsg(challenger, "You drew! you scored: " + challengerRes);
+                    writeMsg(challenged, "You drew! you scored: " + challengedRes);
+                }
+
+                else if (challengedRes > challengerRes){
+                    challengedRes += 3;
+                    writeMsg(challenger, "You lost! you scored: " + challengerRes);
+                    writeMsg(challenged, "You won! you scored: " + challengedRes);
+                }
+
+                else if (challengerRes > challengedRes){
+                    challengerRes += 3;
+                    writeMsg(challenger, "You won! you scored: " + challengerRes);
+                    writeMsg(challenged, "You lost! you scored: " + challengedRes);
+                }
+
+
+                User challengerUser = db.getUser(nickname);
+                User friendUser = db.getUser(friendNick);
+
+                synchronized(challengerUser){
+                    challengerUser.modifyScore(challengedRes);
+                }
+
+                synchronized(friendUser){
+                    friendUser.modifyScore(challengerRes);
+                }
+
+                Thread.sleep(100);
+                System.out.println(nickname + " scored " + challengedRes);
+                System.out.println(friendNick + " scored " + challengerRes);
 
             }
 
