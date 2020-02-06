@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.net.Socket;
 
 /**
- * Server class used to implement the main loop in the application. implements a multithreaded server.
+ * Server class used to implement the main loop in the application.
  */
 public class Server implements Runnable{
     WordExtractor extractor = null;

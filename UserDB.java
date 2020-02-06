@@ -64,9 +64,6 @@ public class UserDB{
         db = deserializedDB;
     }
 
-    public void init(){
-    }
-
     /**
      * getter method used to retrieve a User from the db. 
      * @param nick the nickname of the user to be retrieved
@@ -91,17 +88,5 @@ public class UserDB{
         }
     }
 
-    /**
-     * Main method used for testing purposes only. 
-     * @param args
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    public static void main(String[] args) throws InterruptedException, IOException {
-        UserDB database = new UserDB();
-        System.out.println(database.addUser("ciccio", new User("ciccio", "cazzo")));
-        Thread.sleep(20000);
-        System.out.println("check for serialization!");
-    }
 }
 
